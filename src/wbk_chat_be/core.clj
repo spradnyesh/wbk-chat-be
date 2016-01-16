@@ -3,6 +3,7 @@
             [luminus.repl-server :as repl]
             [luminus.http-server :as http]
             [wbk-chat-be.db.migrations :as migrations]
+            [wbk-chat-be.db.core :as db]
             [environ.core :refer [env]])
   (:gen-class))
 
@@ -19,6 +20,7 @@
 (defn stop-app []
   (repl/stop)
   (http/stop destroy)
+  (db/disconnect!)
   (shutdown-agents))
 
 (defn start-app
@@ -28,6 +30,7 @@
     (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app))
     (when-let [repl-port (env :nrepl-port)]
       (repl/start {:port (parse-port repl-port)}))
+    (db/connect!)
     (http/start {:handler app
                  :init    init
                  :port    port})))
@@ -38,4 +41,3 @@
     (do (migrations/migrate args) (System/exit 0))
     :else
     (start-app args)))
-  

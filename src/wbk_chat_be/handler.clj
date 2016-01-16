@@ -1,7 +1,7 @@
 (ns wbk-chat-be.handler
   (:require [compojure.core :refer [defroutes routes wrap-routes]]
             [wbk-chat-be.layout :refer [error-page]]
-            [wbk-chat-be.routes.home :refer [home-routes]]
+            [wbk-chat-be.routes.auth :refer [auth-routes]]
             [wbk-chat-be.middleware :as middleware]
             [clojure.tools.logging :as log]
             [compojure.route :as route]
@@ -32,7 +32,7 @@
 
 (def app-routes
   (routes
-    (wrap-routes #'home-routes middleware/wrap-csrf)
+    (wrap-routes #'auth-routes middleware/wrap-csrf)
     (route/not-found
       (:body
         (error-page {:status 404

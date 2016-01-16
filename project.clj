@@ -5,11 +5,11 @@
 
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [selmer "1.0.0"]
-                 [markdown-clj "0.9.85"]
                  [environ "1.0.1"]
                  [ring-middleware-format "0.7.0"]
                  [metosin/ring-http-response "0.6.5"]
                  [bouncer "1.0.0"]
+                 [buddy "0.9.0"]
                  [org.webjars/bootstrap "3.3.6"]
                  [org.webjars/jquery "2.2.0"]
                  [org.clojure/tools.logging "0.3.1"]
@@ -50,8 +50,6 @@
                                  [ring/ring-devel "1.4.0"]
                                  [pjstadig/humane-test-output "0.7.1"]
                                  [mvxcvi/puget "1.0.0"]]
-                  
-                  
                   :source-paths ["env/dev/clj"]
                   :repl-options {:init-ns wbk-chat-be.core}
                   :injections [(require 'pjstadig.humane-test-output)

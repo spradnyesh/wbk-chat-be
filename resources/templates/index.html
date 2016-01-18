@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% style "/assets/bootstrap/css/bootstrap.min.css" %}
+    {% style "/assets/bootstrap/css/bootstrap-theme.min.css" %}
+    {% style "/css/style.css" %}
+  </head>
+  <body>
+    <!-- navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <div id="nav"></div>
+        </div>
+      </div>
+    </nav>
+    <!-- app -->
+    <div id="app"></div>
+    <!-- scripts -->
+    <script type="text/javascript">
+        var context = "{{servlet-context}}";
+    </script>
+    {% script "/js/app.js" %}
+  </body>
+</html>

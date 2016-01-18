@@ -10,6 +10,19 @@
 (parser/set-resource-path!  (clojure.java.io/resource "templates"))
 (parser/add-tag! :csrf-field (fn [_ _] (anti-forgery-field)))
 
+(defn render
+  "renders the HTML template located relative to resources/templates"
+  [template & [params]]
+  (content-type
+   (ok
+    (parser/render-file
+     template
+     (assoc params
+            :page template
+            :csrf-token *anti-forgery-token*
+            :servlet-context *app-context*)))
+   "text/html; charset=utf-8"))
+
 (defn json [body]
   (content-type (ok body) "application/json; charset=utf-8"))
 

@@ -3,6 +3,7 @@
             [wbk-chat-be.layout :refer [error-page]]
             [wbk-chat-be.routes.auth :refer [auth-routes]]
             [wbk-chat-be.middleware :as middleware]
+            [wbk-chat-be.db.users :as du]
             [clojure.tools.logging :as log]
             [compojure.route :as route]
             [environ.core :refer [env]]
@@ -19,6 +20,7 @@
     (org.apache.log4j.PropertyConfigurator/configure config))
   (doseq [component (:started (mount/start))]
     (log/info component "started"))
+  (du/init-state)
   ((:init defaults)))
 
 (defn destroy

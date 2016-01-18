@@ -4,7 +4,6 @@
             [luminus.http-server :as http]
             [wbk-chat-be.db.migrations :as migrations]
             [wbk-chat-be.db.core :as db]
-            [wbk-chat-be.db.users :as du]
             [environ.core :refer [env]])
   (:gen-class))
 
@@ -18,10 +17,12 @@
 (defn http-port [port]
   (parse-port (or port (env :port) 3000)))
 
+(def connections (atom []))
+
 (defn stop-app []
   (repl/stop)
   (http/stop destroy)
-  (db/disconnect!)
+  (db/disconnect! (:db @connections))
   (shutdown-agents))
 
 (defn start-app
@@ -31,8 +32,7 @@
     (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app))
     (when-let [repl-port (env :nrepl-port)]
       (repl/start {:port (parse-port repl-port)}))
-    (db/connect!)
-    (du/init-state)
+    (swap! connections conj {:db (db/connect!)})
     (http/start {:handler app
                  :init    init
                  :port    port})))

@@ -10,7 +10,7 @@
 (parser/set-resource-path!  (clojure.java.io/resource "templates"))
 (parser/add-tag! :csrf-field (fn [_ _] (anti-forgery-field)))
 
-(defn render [body]
+(defn json [body]
   (content-type (ok body) "application/json; charset=utf-8"))
 
 (defn error-page

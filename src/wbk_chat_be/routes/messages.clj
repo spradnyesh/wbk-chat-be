@@ -15,10 +15,10 @@
              from (du/find-user-by-token token)]
          (if-let [msg-id (dm/send-msg (:id from) to-id msg)]
            (do nil ; TODO: send msg to to-id via websockets
-               (l/render {:status true :body msg-id}))
-           (l/render {:status nil :body "Could not send message!"})))
+               (l/json {:status true :body msg-id}))
+           (l/json {:status nil :body "Could not send message!"})))
        (catch NumberFormatException nfe
-         (l/render {:status nil :body "Invalid To-User!"}))))
+         (l/json {:status nil :body "Invalid To-User!"}))))
 
 (defn sync-msgs [token last-msg-id]
   (try (let [msg-id (Integer/parseInt (or last-msg-id "0"))
@@ -26,15 +26,15 @@
              msgs (dm/read-msgs (:id user)
                                 (or msg-id (:last-msg-seen user)))]
          (du/update-last-msg-seen token (:id (last msgs)))
-         (l/render {:status true
-                    :body (mapv #(let [from (du/get-user (:from_user_id %))
-                                       to (du/get-user (:to_user_id %))]
-                                   (assoc %
-                                          :from-first-name (:first_name from)
-                                          :from-last-name (:last_name from)
-                                          :to-first-name (:first_name to)
-                                          :to-last-name (:last_name to)))
-                                msgs)}))
+         (l/json {:status true
+                  :body (mapv #(let [from (du/get-user (:from_user_id %))
+                                     to (du/get-user (:to_user_id %))]
+                                 (assoc %
+                                        :from-first-name (:first_name from)
+                                        :from-last-name (:last_name from)
+                                        :to-first-name (:first_name to)
+                                        :to-last-name (:last_name to)))
+                              msgs)}))
        (catch NumberFormatException nfe
          (sync-msgs token "0"))))
 

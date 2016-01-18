@@ -51,8 +51,8 @@
 
 (defn register [email passwd passwd2 firstname lastname]
   (if (du/find-user-by-email email)
-    (l/render {:status nil
-               :body "User already exists!"})
+    (l/json {:status nil
+             :body "User already exists!"})
     (let [user {:email email
                 :passwd passwd
                 :passwd2 passwd2
@@ -61,21 +61,21 @@
       (let [v (valid? user)]
         (if-not (first v)
           (do (du/create-user (assoc user :passwd (bh/encrypt passwd)))
-              (l/render {:status true :body "Registered sucessfully!"}))
-          (l/render {:status nil :body (first v)}))))))
+              (l/json {:status true :body "Registered sucessfully!"}))
+          (l/json {:status nil :body (first v)}))))))
 
 (defn login [email passwd]
   (if-not (du/find-user-by-email email)
-    (l/render {:status nil :body "Invalid username/password!"})
-    (l/render {:status true
-               :body {:token (gen-token email)
-                      :users (mapv #(select-keys % [:first_name :last_name])
-                                   (du/get-all-users))}})))
+    (l/json {:status nil :body "Invalid username/password!"})
+    (l/json {:status true
+             :body {:token (gen-token email)
+                    :users (mapv #(select-keys % [:first_name :last_name])
+                                 (du/get-all-users))}})))
 
 (defn logout [token]
   (if (del-token token)
-    (l/render {:status true :body "Logged-out successfully!"})
-    (l/render {:status nil :body "Invalid token!"})))
+    (l/json {:status true :body "Logged-out successfully!"})
+    (l/json {:status nil :body "Invalid token!"})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Routes

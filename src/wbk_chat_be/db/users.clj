@@ -16,19 +16,6 @@
            [i (nth @state i)])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; Manage state
-
-(defn init-state []
-  (reset! state
-          (mapv (fn [u] {:email (:email u) :token nil})
-                (get-all-users))))
-
-(defn update-token [email token]
-  (if-let [idx (first (find-in-state :email email))]
-    (swap! state assoc-in [idx :token] token)
-    (swap! state conj {:email email :token token})))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Interfaces
 ;; mostly (thin) wrapper around db/*
 ;; but needed so that, even if DB changes, these interfaces do not change
@@ -39,8 +26,33 @@
 (defn get-user [id]
   (first (db/get-user {:id id})))
 
-(defn find-user [email]
+(defn find-user-by-email [email]
   (first (db/find-user {:email email})))
 
+(defn find-user-by-token [token]
+  (last (find-in-state :token token)))
+
+(defn init-state []
+  (reset! state
+          (mapv (fn [u] {:id (:id u) :email (:email u)
+                         :token nil :last-msg-seen 0})
+                (get-all-users))))
+
+(defn update-token [email token]
+  (if-let [idx (first (find-in-state :email email))]
+    (swap! state assoc-in [idx :token] token)
+    (let [user (find-user-by-email email)]
+      (swap! state conj {:id (:id user) :email email
+                         :token token :last-msg-seen 0})))
+  token)
+
+(defn update-last-msg-seen [token msgid]
+  (if-let [idx (first (find-in-state :token token))]
+    (swap! state assoc-in [idx :last-msg-seen] msgid)
+    (let [user (find-user-by-token token)]
+      (swap! state conj {:id (:id user) :email (:email user)
+                         :token token :last-msg-seen 0}))))
+
 (defn create-user [user]
-  (db/create-user! user))
+  (db/create-user! user)
+  (update-token (:email user) nil))

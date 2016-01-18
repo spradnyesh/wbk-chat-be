@@ -28,3 +28,21 @@ WHERE email = :email
 -- delete a user given the id
 DELETE FROM users
 WHERE id = :id
+
+-- name: create-message!
+-- creates a new message record
+INSERT INTO messages
+(from_user_id, to_user_id, message)
+VALUES (:from, :to, :message)
+
+-- name: read-messages
+-- retrieve messages for a user
+SELECT * FROM messages
+WHERE from_user_id = :id
+
+-- name: read-user-messages
+-- retrieve messages for a user >= msg_id
+SELECT * FROM messages
+WHERE id > :msgid
+AND (to_user_id = :id
+     OR from_user_id = :id)

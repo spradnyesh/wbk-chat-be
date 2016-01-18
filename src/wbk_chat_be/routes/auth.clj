@@ -50,7 +50,7 @@
 ;;;; Logic
 
 (defn register [email passwd passwd2 firstname lastname]
-  (if (du/find-user email)
+  (if (du/find-user-by-email email)
     (l/render {:status nil
                :body "User already exists!"})
     (let [user {:email email
@@ -60,21 +60,17 @@
                 :lastname lastname}]
       (let [v (valid? user)]
         (if-not (first v)
-          (do (du/create-user (assoc user
-                                     :passwd (bh/encrypt passwd)))
-              (l/render {:status true
-                         :body "Registered sucessfully!"}))
-          (l/render {:status nil
-                     :body (first v)}))))))
+          (do (du/create-user (assoc user :passwd (bh/encrypt passwd)))
+              (l/render {:status true :body "Registered sucessfully!"}))
+          (l/render {:status nil :body (first v)}))))))
 
 (defn login [email passwd]
-  (if-not (du/find-user email)
-    (l/render {:status nil
-               :body "Invalid username/password!"})
-    (do (l/render {:status true
-                   :body {:token (gen-token email)
-                          :users (mapv #(select-keys % [:first_name :last_name])
-                                       (du/get-all-users))}}))))
+  (if-not (du/find-user-by-email email)
+    (l/render {:status nil :body "Invalid username/password!"})
+    (l/render {:status true
+               :body {:token (gen-token email)
+                      :users (mapv #(select-keys % [:first_name :last_name])
+                                   (du/get-all-users))}})))
 
 (defn logout [token]
   (if (del-token token)

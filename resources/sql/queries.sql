@@ -10,13 +10,17 @@ UPDATE users
 SET first_name = :firstname, last_name = :lastname, email = :email
 WHERE id = :id
 
+-- name: get-all-users
+-- retrieve all users
+SELECT * FROM users
+
 -- name: get-user
--- retrieve a user given the id.
+-- retrieve a user given the id
 SELECT * FROM users
 WHERE id = :id
 
 -- name: find-user
--- retrieve a user given the email.
+-- retrieve a user given the email
 SELECT * FROM users
 WHERE email = :email
 

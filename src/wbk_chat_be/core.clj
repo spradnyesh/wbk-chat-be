@@ -4,6 +4,7 @@
             [luminus.http-server :as http]
             [wbk-chat-be.db.migrations :as migrations]
             [wbk-chat-be.db.core :as db]
+            [wbk-chat-be.db.users :as du]
             [environ.core :refer [env]])
   (:gen-class))
 
@@ -31,6 +32,7 @@
     (when-let [repl-port (env :nrepl-port)]
       (repl/start {:port (parse-port repl-port)}))
     (db/connect!)
+    (du/init-state)
     (http/start {:handler app
                  :init    init
                  :port    port})))

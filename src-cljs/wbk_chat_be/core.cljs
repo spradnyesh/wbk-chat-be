@@ -12,7 +12,8 @@
                             :name nil
                             :users []
                             :to nil
-                            :to-name nil}))
+                            :to-name nil
+                            :last-msg-seen 0}))
 (defonce page (r/atom :home))
 (defonce messages (r/atom []))
 
@@ -38,6 +39,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Handlers
+
+(defn h-sync [response]
+  (let [status (response "status")
+        body (response "body")]
+    (if status
+      (when-not (empty? body)
+        (doall (map (fn [b]
+                      (swap! messages conj {:to (b "to_user_id")
+                                            :from (b "from_user_id")
+                                            :msg (b "message")
+                                            :datetime (b "datetime")}))
+                    body))
+        (swap! app-state assoc :last-msg-seen ((last body) "id"))))))
 
 (defn h-send-msg [response]
   (let [status (response "status")
@@ -76,11 +90,18 @@
   (let [status (response "status")
         body (response "body")]
     (reset! app-state nil)
-    (reset! messages nil)
+    (reset! messages [])
     (reset! page :home)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Logic (communication with service)
+
+(defn sync-msgs []
+  (when-let [token (:token @app-state)]
+    (GET "/sync" {:handler h-sync
+                  :error-handler error-handler
+                  :params {:token token
+                           :msg-id (or (:last-msg-seen @app-state) 0)}})))
 
 (defn send-msg [msg]
   (POST "/send-msg" {:handler h-send-msg
@@ -132,16 +153,17 @@
                       name]]))])
 
 (defn message-list []
-  [:table.table.table-striped
-   (doall (for [[i msg] (map-indexed vector (reverse @messages))]
-            ^{:key i}
-            [:tr [:td [:ul.list-unstyled
-                       [:li [:span.datetime (:datetime msg)]
-                            (when-let [to (:to msg)]
-                              [:span.bg-success.pull-right (user-id->name to)])
-                            (when-let [from (:from msg)]
-                              [:span.bg-info.pull-right (user-id->name from)])]
-                       [:li.msg (:msg msg)]]]]))])
+  (when (not (empty? @messages))
+    [:table.table.table-striped
+     (doall (for [[i msg] (map-indexed vector (reverse @messages))]
+              ^{:key i}
+              [:tr [:td [:ul.list-unstyled
+                         [:li.small [:span.datetime (:datetime msg)]
+                          (when-let [to (:to msg)]
+                            [:span.bg-success.pull-right (user-id->name to)])
+                          (when-let [from (:from msg)]
+                            [:span.bg-info.pull-right (user-id->name from)])]
+                         [:li [:mark (:msg msg)]]]]]))]))
 
 (defn message-input []
   (let [value (r/atom nil)]
@@ -247,6 +269,7 @@
   - attaches component 'main' to '#app' element in index.html"
   []
   (r/render [nav] (by-id "nav"))
-  (r/render [main] (by-id "app")))
+  (r/render [main] (by-id "app"))
+  (js/setInterval sync-msgs 1000))
 
 (defn init! [] (mount-components))

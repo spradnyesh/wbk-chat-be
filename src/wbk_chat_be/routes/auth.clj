@@ -73,8 +73,9 @@
       (l/json {:status true
                :body {:token (gen-token email)
                       :name (str (:first_name user) " " (:last_name user))
-                      :users (mapv #(select-keys % [:first_name :last_name])
-                                   (du/get-all-users))}})
+                      :users (remove #(= (:id user) (:id %))
+                                     (mapv #(select-keys % [:id :first_name :last_name])
+                                           (du/get-all-users)))}})
       (l/json {:status nil :body "Invalid username/password!"}))))
 
 (defn logout [token]

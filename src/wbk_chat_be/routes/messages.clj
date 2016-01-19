@@ -11,9 +11,8 @@
 ;;;; Logic
 
 (defn send-msg [token to msg]
-  (try (let [to-id (Integer/parseInt to)
-             from (du/find-user-by-token token)]
-         (if-let [msg-id (dm/send-msg (:id from) to-id msg)]
+  (try (let [from (du/find-user-by-token token)]
+         (if-let [msg-id (dm/send-msg (:id from) to msg)]
            (do nil ; TODO: send msg to to-id via websockets
                (l/json {:status true :body msg-id}))
            (l/json {:status nil :body "Could not send message!"})))
@@ -42,5 +41,5 @@
 ;;;; Routes
 
 (defroutes msg-routes
-  (POST "/send" [token to msg] (send-msg token to msg))
+  (POST "/send-msg" [token to msg] (send-msg token to msg))
   (GET "/sync/:token/:msg-id" [token msg-id] (sync-msgs token msg-id)))

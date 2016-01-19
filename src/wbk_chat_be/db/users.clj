@@ -53,5 +53,5 @@
                          :token token :last-msg-seen 0}))))
 
 (defn create-user [user]
-  (db/create-user! user)
+  (db/create-user<! user)
   (update-token (:email user) nil))

@@ -1,4 +1,4 @@
--- name: create-user!
+-- name: create-user<!
 -- creates a new user record
 INSERT INTO users
 (first_name, last_name, email, passwd)
@@ -29,7 +29,7 @@ WHERE email = :email
 DELETE FROM users
 WHERE id = :id
 
--- name: create-message!
+-- name: create-message<!
 -- creates a new message record
 INSERT INTO messages
 (from_user_id, to_user_id, message)

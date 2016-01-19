@@ -9,10 +9,12 @@
 ;; whenever these value changes our "main" component gets re-drawn
 
 (defonce app-state (r/atom {:token nil
-                            :name ""
+                            :name nil
                             :users []
-                            :messages []}))
+                            :to nil
+                            :to-name nil}))
 (defonce page (r/atom :home))
+(defonce messages (r/atom []))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; utils
@@ -28,8 +30,23 @@
 (defn child-value [children index]
   (.-value (aget (.-children (aget children index)) 1)))
 
+(defn user-id->name [id]
+  (when id
+    (when-let [u (first (filter #(= id (% "id"))
+                                (:users @app-state)))]
+      (str (u "first_name") " " (u "last_name")))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Handlers
+
+(defn h-send-msg [response]
+  (let [status (response "status")
+        body (response "body")]
+    (if status
+      (swap! messages conj {:to (:to @app-state)
+                            :msg (body "message")
+                            :datetime (body "datetime")})
+      (js/alert (str body " Please try again.")))))
 
 (defn h-register [response]
   (let [status (response "status")
@@ -45,7 +62,9 @@
     (if status
       (do (swap! app-state assoc
                  :token (body "token")
-                 :name (body "name"))
+                 :name (body "name")
+                 :users (body "users")
+                 :to ((first (body "users")) "id"))
           (reset! page :home))
       (js/alert (str body " Please try again.")))))
 
@@ -59,6 +78,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Logic (communication with service)
+
+(defn send-msg [msg]
+  (POST "/send-msg" {:handler h-send-msg
+                     :error-handler error-handler
+                     :params {:token (:token @app-state)
+                              :to (:to @app-state)
+                              :msg msg}}))
 
 (defn register [e]
   (let [f-children (event->form-children e)
@@ -88,6 +114,45 @@
   (POST "/logout" {:handler h-logout
                   :error-handler error-handler
                   :params {:token (:token @app-state)}}))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; helper UI components
+
+(defn users []
+  [:ul.list-unstyled
+   (for [[i u] (map-indexed vector (:users @app-state))]
+     (let [name (str (u "first_name") " " (u "last_name"))]
+       ^{:key i}[:li [:a {:href "#"
+                          :on-click #(swap! app-state assoc
+                                            :to (u "id")
+                                            :to-name name)}
+                      name]]))])
+
+(defn message-list []
+  [:table.table.table-striped
+   (doall (for [[i msg] (map-indexed vector (reverse @messages))]
+            ^{:key i}
+            [:tr [:td [:ul.list-unstyled
+                       [:li [:span.datetime (:datetime msg)]
+                            (when-let [to (:to msg)]
+                              [:span.bg-success.pull-right (user-id->name to)])
+                            (when-let [from (:from msg)]
+                              [:span.bg-info.pull-right (user-id->name from)])]
+                       [:li.msg (:msg msg)]]]]))])
+
+(defn message-input []
+  (let [value (r/atom nil)]
+    (fn []
+      [:div.panel
+       [:input.form-control
+        {:type :text
+         :placeholder "type in a message and press enter"
+         :value @value
+         :on-change #(reset! value (-> % .-target .-value))
+         :on-key-down
+         #(when (= (.-keyCode %) 13)
+            (send-msg @value)
+            (reset! value nil))}]])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; main UI components
@@ -133,36 +198,42 @@
       [:li [:a.navbar-brand {:href "#" :on-click #(reset! page :home)}
             "WBK-CHAT"]]
       [:li [:a {:href "#" :on-click #(reset! page :sign-up)}
-            "Sign-up"]]
+            "Register"]]
       [:li [:a {:href "#" :on-click #(reset! page :sign-in)}
-            "Sign-in"]]]]
+            "Login"]]]]
     ;; logged-in state
     [:div.navbar-collapse.collapse
      [:ul.nav.navbar-nav
       [:li [:a.navbar-brand {:href "#" :on-click #(reset! page :home)}
             "WBK-CHAT"]]
-      [:li [:a {:href "#" :on-click nil} (str "Welcome " (:name @app-state) "!")]]
-      [:li [:a {:href "#" :on-click logout} "Log-out"]]]]))
-
-(defn home [] [:div.jumbotron [:h2 "Welcome to Wunderbar Kids!!!"]])
+      [:li [:a {:href "#" :on-click nil} (str "Welcome \"" (:name @app-state) "\"!")]]
+      [:li [:a {:href "#" :on-click logout} "Logout"]]]]))
 
 (defn chat []
   [:div
-   [:div.row {:id "upper"}
-    [:div.col-sm-8 "Messages"]
-    [:div.col-sm-4 "Users"]]
    [:div.row
-    [:div.col-sm-8 "Input"]
-    [:div.col-sm-4 "Send"]]])
+    [:div.col-sm-10
+     [:div [:h5 "Currently chatting with " [:strong (:to-name @app-state)]]]
+     [message-input]]
+    [:div.col-sm-2 [:button.btn.btn-default "Share image/video"]]]
+   [:div.row
+    [:div.col-sm-10
+     [message-list]]
+    [:div.col-sm-2 [users]]]])
+
+(defn home []
+  (if-not (:token @app-state)
+    [:div.jumbotron [:h2 "Welcome to Wunderbar Kids!!!"]]
+    [chat]))
 
 (defn main
   "displays UI using 'hiccup' style markup"
   [state]
   [:div.container (condp = @page
-                    :home (home)
-                    :sign-up (register-form)
-                    :sign-in (login-form)
-                    :chat (chat))])
+                    :home [home]
+                    :sign-up [register-form]
+                    :sign-in [login-form]
+                    :chat [chat])])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; init system

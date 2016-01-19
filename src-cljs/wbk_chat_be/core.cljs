@@ -60,12 +60,16 @@
   (let [status (response "status")
         body (response "body")]
     (if status
-      (do (swap! app-state assoc
-                 :token (body "token")
-                 :name (body "name")
-                 :users (body "users")
-                 :to ((first (body "users")) "id"))
-          (reset! page :home))
+      (let [users (body "users")
+            first-user (first users)]
+        (swap! app-state assoc
+               :token (body "token")
+               :name (body "name")
+               :users users
+               :to ((first users) "id")
+               :to-name (str (first-user "first_name")
+                             " " (first-user "last_name")))
+        (reset! page :home))
       (js/alert (str body " Please try again.")))))
 
 (defn h-logout [response]

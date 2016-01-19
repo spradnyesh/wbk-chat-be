@@ -17,12 +17,9 @@
 (defn http-port [port]
   (parse-port (or port (env :port) 3000)))
 
-(def connections (atom []))
-
 (defn stop-app []
   (repl/stop)
   (http/stop destroy)
-  (db/disconnect! (:db @connections))
   (shutdown-agents))
 
 (defn start-app
@@ -32,7 +29,6 @@
     (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app))
     (when-let [repl-port (env :nrepl-port)]
       (repl/start {:port (parse-port repl-port)}))
-    (swap! connections conj {:db (db/connect!)})
     (http/start {:handler app
                  :init    init
                  :port    port})))

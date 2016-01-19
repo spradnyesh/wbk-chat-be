@@ -43,8 +43,7 @@
     (swap! state assoc-in [idx :token] token)
     (let [user (find-user-by-email email)]
       (swap! state conj {:id (:id user) :email email
-                         :token token :last-msg-seen 0})))
-  token)
+                         :token token :last-msg-seen 0}))))
 
 (defn update-last-msg-seen [token msgid]
   (if-let [idx (first (find-in-state :token token))]

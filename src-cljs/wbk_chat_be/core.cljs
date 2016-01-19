@@ -71,9 +71,8 @@
 (defn h-logout [response]
   (let [status (response "status")
         body (response "body")]
-    (swap! app-state assoc
-           :token nil
-           :name nil)
+    (reset! app-state nil)
+    (reset! messages nil)
     (reset! page :home)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

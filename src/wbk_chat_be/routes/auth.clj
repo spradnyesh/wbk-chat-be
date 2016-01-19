@@ -71,7 +71,8 @@
     (if (and user
              (bh/check passwd (:passwd user)))
       (l/json {:status true
-               :body {:token (gen-token email)
+               :body {:id (:id user)
+                      :token (gen-token email)
                       :name (str (:first_name user) " " (:last_name user))
                       :users (remove #(= (:id user) (:id %))
                                      (mapv #(select-keys % [:id :first_name :last_name])

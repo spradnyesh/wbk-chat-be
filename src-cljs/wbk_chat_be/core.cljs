@@ -1,6 +1,7 @@
 (ns wbk-chat-be.core
   (:require [reagent.core :as r]
-            [ajax.core :refer [GET POST]]))
+            [ajax.core :refer [GET POST]]
+            [wbk-chat-be.websockets :as ws]))
 
 (enable-console-print!)
 
@@ -8,7 +9,8 @@
 ;;;; global states
 ;; whenever these value changes our "main" component gets re-drawn
 
-(defonce app-state (r/atom {:token nil
+(defonce app-state (r/atom {:id nil
+                            :token nil
                             :name nil
                             :users []
                             :to nil
@@ -90,6 +92,9 @@
           (reset! page :home))
       (js/alert (str body " Please try again.")))))
 
+(defn update-messages! [{:keys [message]}]
+  (println "@@@" message))
+
 (defn h-login [response]
   (let [status (response "status")
         body (response "body")]
@@ -97,13 +102,16 @@
       (let [users (body "users")
             first-user (first users)]
         (swap! app-state assoc
+               :id (body "id")
                :token (body "token")
                :name (body "name")
                :users users
                :to ((first users) "id")
                :to-name (str (first-user "first_name")
                              " " (first-user "last_name")))
-        (reset! page :home))
+        (reset! page :home)
+        #_(ws/make-websocket! (str "ws://" (.-host js/location) "/ws/" (:id @app-state))
+                            update-messages!))
       (js/alert (str body " Please try again.")))))
 
 (defn h-logout [response]
@@ -124,11 +132,13 @@
                            :msg-id (or (:last-msg-seen @app-state) 0)}})))
 
 (defn send-msg [msg]
-  (POST "/send-msg" {:handler h-send-msg
-                     :error-handler error-handler
-                     :params {:token (:token @app-state)
-                              :to (:to @app-state)
-                              :msg msg}}))
+  (let [params {:token (:token @app-state)
+                :to (:to @app-state)
+                :msg msg}]
+    #_(ws/send-msg! params)
+    (POST "/send-msg" {:handler h-send-msg
+                         :error-handler error-handler
+                         :params params})))
 
 (defn upload-file [e]
   (let [el (by-id "file")

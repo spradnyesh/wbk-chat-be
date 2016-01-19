@@ -6,6 +6,7 @@
             [wbk-chat-be.routes.auth :refer [auth-routes]]
             [wbk-chat-be.routes.messages :refer [msg-routes]]
             [wbk-chat-be.routes.reports :refer [report-routes]]
+            [wbk-chat-be.routes.websockets :refer [websocket-routes]]
             [wbk-chat-be.middleware :as middleware]
             [wbk-chat-be.db.users :as du]
             [clojure.tools.logging :as log]
@@ -40,7 +41,7 @@
 (def app-routes
   (routes
    (wrap-routes #'home-routes middleware/wrap-csrf)
-   auth-routes msg-routes report-routes
+   auth-routes msg-routes report-routes websocket-routes
    (route/resources "/")
    (route/not-found
     (:body

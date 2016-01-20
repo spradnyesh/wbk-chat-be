@@ -23,30 +23,22 @@
 
 (defn send-msg [token to msg]
   (let [from (du/find-user-by-token token)]
-    (if-let [msg-id (dm/send-msg (:id from) to msg)]
+    (if-let [rslt (dm/send-msg (:id from) to msg)]
       (do nil ; TODO: send msg to to-id via websockets
-          (l/json {:status true :body msg-id}))
+          (l/json {:status true :body rslt}))
       (l/json {:status nil :body "Could not send message!"}))))
 
 (defn sync-msgs [token last-msg-id]
   (try (let [msg-id (Integer/parseInt (or last-msg-id "0"))
              user (du/find-user-by-token token)
              msgs (dm/read-msgs (:id user)
-                                (or msg-id (:last-msg-seen user)))
-             msgs-with-names (mapv #(let [from (du/get-user (:from_user_id %))
-                                          to (du/get-user (:to_user_id %))]
-                                      (assoc %
-                                             :from-first-name (:first_name from)
-                                             :from-last-name (:last_name from)
-                                             :to-first-name (:first_name to)
-                                             :to-last-name (:last_name to)))
-                                   msgs)]
+                                (or msg-id (:last-msg-seen user)))]
          (du/update-last-msg-seen token (:id (last msgs)))
          (l/json {:status true
                   :body (if (zero? msg-id)
-                          msgs-with-names
+                          msgs
                           (remove #(= (:id user) (:from_user_id %))
-                                  msgs-with-names))}))
+                                  msgs))}))
        (catch NumberFormatException nfe
          (sync-msgs token "0"))))
 
@@ -57,9 +49,9 @@
           to-id (Integer/parseInt to)
           new-fname (rename-file (str tempfile) (str filename))]
       (if new-fname
-        (if-let [msg-id (dm/send-file (:id from) to-id new-fname)]
+        (if-let [rslt (dm/send-file (:id from) to-id new-fname)]
           (do nil ; TODO: send msg to to-id via websockets
-              (l/json {:status true :body msg-id}))
+              (l/json {:status true :body rslt}))
           (l/json {:status nil :body "Could not share file!"}))
         (l/json {:status nil :body "Could not store file!"})))))
 

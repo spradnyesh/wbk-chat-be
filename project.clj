@@ -27,17 +27,16 @@
                  [org.postgresql/postgresql "9.4-1206-jdbc4"]
                  [org.clojure/clojurescript "1.7.228" :scope "provided"]
                  [reagent "0.5.1"]
-                 ;; [reagent-forms "0.5.13"]
-                 ;; [reagent-utils "0.1.7"]
-                 [secretary "1.2.3"]
                  [org.clojure/core.async "0.2.374"]
                  [cljs-ajax "0.5.3"]
+                 [im.chit/cronj "1.4.4"]
+                 [clj-time "0.11.0"]
                  [org.webjars/webjars-locator-jboss-vfs "0.1.0"]
                  [luminus-immutant "0.1.0"]]
 
   :min-lein-version "2.0.0"
   :uberjar-name "wbk-chat-be.jar"
-  :jvm-opts ["-server"]
+  :jvm-opts ["-server" "-Duser.timezone=Asia/Kolkata"]
   :resource-paths ["resources"]
 
   :main wbk-chat-be.core

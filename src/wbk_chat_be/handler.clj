@@ -1,5 +1,6 @@
 (ns wbk-chat-be.handler
   (:require [compojure.core :refer [defroutes routes wrap-routes]]
+            [wbk-chat-be.cron :refer [restart-cron]]
             [wbk-chat-be.layout :refer [error-page]]
             [wbk-chat-be.routes.home :refer [home-routes]]
             [wbk-chat-be.routes.auth :refer [auth-routes]]
@@ -23,6 +24,7 @@
   (doseq [component (:started (mount/start))]
     (log/info component "started"))
   (du/init-state)
+  (restart-cron)
   ((:init defaults)))
 
 (defn destroy

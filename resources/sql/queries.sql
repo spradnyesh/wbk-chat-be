@@ -46,3 +46,45 @@ SELECT * FROM messages
 WHERE id > :msgid
 AND (to_user_id = :id
      OR from_user_id = :id)
+
+-- name: count-messages-from
+-- retrieve message count for a from-user
+SELECT COUNT(*) FROM messages
+WHERE from_user_id = :id
+AND datetime >= :from
+AND datetime <= :to
+AND message IS NOT NULL
+AND trim(message) != ''
+
+-- name: count-messages-to
+-- retrieve message count for a to-user
+SELECT COUNT(*) FROM messages
+WHERE to_user_id = :id
+AND datetime >= :from
+AND datetime <= :to
+AND message IS NOT NULL
+AND trim(message) != ''
+
+-- name: count-shares-from
+-- retrieve shares count for a from-user
+SELECT COUNT(*) FROM messages
+WHERE from_user_id = :id
+AND datetime >= :from
+AND datetime <= :to
+AND file IS NOT NULL
+AND trim(file) != ''
+
+-- name: count-shares-to
+-- retrieve shares count for a to-user
+SELECT COUNT(*) FROM messages
+WHERE to_user_id = :id
+AND datetime >= :from
+AND datetime <= :to
+AND file IS NOT NULL
+AND trim(file) != ''
+
+-- name: create-user-report!
+-- create a user-report row
+INSERT INTO reports
+(user_id, year, week, num_msg_sent, num_msg_recd, num_vid_sent, num_vid_recd)
+VALUES (:id, :year, :week, :num_msg_sent, :num_msg_recd, :num_vid_sent, :num_vid_recd)

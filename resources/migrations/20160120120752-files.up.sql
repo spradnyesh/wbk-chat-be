@@ -1,0 +1,2 @@
+ALTER TABLE messages
+ADD COLUMN file VARCHAR(100);

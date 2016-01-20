@@ -32,8 +32,8 @@ WHERE id = :id
 -- name: create-message<!
 -- creates a new message record
 INSERT INTO messages
-(from_user_id, to_user_id, message)
-VALUES (:from, :to, :message)
+(from_user_id, to_user_id, message, file)
+VALUES (:from, :to, :message, :file)
 
 -- name: read-messages
 -- retrieve messages for a user

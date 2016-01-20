@@ -3,3 +3,14 @@ html, body {
     height: 100%;
     padding-top: 40px;
 }
+
+#popup > div {
+    width: 400px;
+    height: 100px;
+    padding: 20px;
+    position: fixed;
+    top: 200px;
+    left: 200px;
+    background-color: white;
+    border: solid 1px gray;
+}

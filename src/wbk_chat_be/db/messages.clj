@@ -2,15 +2,17 @@
   (:require [wbk-chat-be.db.core :as db]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; Helpers
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Interfaces
 ;; mostly (thin) wrapper around db/*
 ;; but needed so that, even if DB changes, these interfaces do not change
 
 (defn send-msg [from to msg]
-  (db/create-message<! {:from from :to to :message msg}))
+  (db/create-message<! {:from from :to to
+                        :message msg :file ""}))
+
+(defn send-file [from to filename]
+  (db/create-message<! {:from from :to to :message ""
+                        :file filename}))
 
 (defn read-msgs [user-id msg-id]
   (db/read-user-messages {:id user-id :msgid msg-id}))

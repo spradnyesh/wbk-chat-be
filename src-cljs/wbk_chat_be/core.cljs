@@ -13,7 +13,8 @@
                             :users []
                             :to nil
                             :to-name nil
-                            :last-msg-seen 0}))
+                            :last-msg-seen 0
+                            :popup nil}))
 (defonce page (r/atom :home))
 (defonce messages (r/atom []))
 
@@ -37,8 +38,27 @@
                                 (:users @app-state)))]
       (str (u "first_name") " " (u "last_name")))))
 
+(defn close-popup [e] (swap! app-state assoc :popup nil))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; Handlers
+;;;; Response Handlers
+
+(defn h-share [response]
+  (let [status (response "status")
+        body (response "body")]
+    (if status
+      (swap! app-state assoc
+             :popup [:div [:p "Successfully shared file!"]
+                     [:button.btn.btn-default
+                      {:on-click close-popup}
+                      "OK!"]])
+      (swap! app-state assoc
+             :popup [:div [:p "File sharing failed!"]
+                     [:p (str "Reason: " body)]
+                     [:p "Please try again."]
+                     [:button.btn.btn-default
+                      {:on-click close-popup}
+                      "OK!"]]))))
 
 (defn h-sync [response]
   (let [status (response "status")
@@ -109,6 +129,30 @@
                      :params {:token (:token @app-state)
                               :to (:to @app-state)
                               :msg msg}}))
+
+(defn upload-file [e]
+  (let [el (by-id "file")
+        fname (.-name el)
+        file (aget (.-files el) 0)
+        form-data (doto (js/FormData.)
+                    (.append "token" (:token @app-state))
+                    (.append "to" (:to @app-state))
+                    (.append fname file))]
+    (POST "/share" {:handler h-share
+                    :error-handler error-handler
+                    :body form-data})))
+
+(defn share [e]
+  (swap! app-state assoc
+         :popup [:form
+                 [:input {:id "file" :name "file"
+                          :type "file" :accept "image/*, video/*"}]
+                 [:input.btn.btn-default {:type "button"
+                                          :on-click upload-file
+                                          :value "Share!"}]
+                 [:input.btn.btn-default {:type "button"
+                                          :on-click close-popup
+                                          :value "Cancel"}]]))
 
 (defn register [e]
   (let [f-children (event->form-children e)
@@ -234,13 +278,19 @@
       [:li [:a {:href "#" :on-click nil} (str "Welcome \"" (:name @app-state) "\"!")]]
       [:li [:a {:href "#" :on-click logout} "Logout"]]]]))
 
+(defn popup [markup]
+  (if-let [markup (:popup @app-state)]
+    [:div.show markup]
+    [:div.hidden]))
+
 (defn chat []
   [:div
    [:div.row
     [:div.col-sm-10
      [:div [:h5 "Currently chatting with " [:strong (:to-name @app-state)]]]
      [message-input]]
-    [:div.col-sm-2 [:button.btn.btn-default "Share image/video"]]]
+    [:div.col-sm-2 [:button.btn.btn-default {:on-click share}
+                    "Share image/video"]]]
    [:div.row
     [:div.col-sm-10
      [message-list]]
@@ -270,6 +320,7 @@
   []
   (r/render [nav] (by-id "nav"))
   (r/render [main] (by-id "app"))
+  (r/render [popup [:div]] (by-id "popup"))
   (js/setInterval sync-msgs 1000))
 
 (defn init! [] (mount-components))

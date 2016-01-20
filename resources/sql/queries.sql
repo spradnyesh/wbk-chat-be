@@ -89,3 +89,7 @@ AND trim(file) != ''
 INSERT INTO reports
 (user_id, year, week, num_msg_sent, num_msg_recd, num_vid_sent, num_vid_recd)
 VALUES (:id, :year, :week, :num_msg_sent, :num_msg_recd, :num_vid_sent, :num_vid_recd)
+
+-- name: get-all-reports
+-- retrieve reports
+SELECT * FROM reports

@@ -18,3 +18,5 @@
                              :num_msg_recd messages-to
                              :num_vid_sent shares-from
                              :num_vid_recd shares-to})))
+
+(defn get-reports [] (db/get-all-reports))

@@ -39,6 +39,7 @@ VALUES (:from, :to, :message, :file)
 -- retrieve messages for a user
 SELECT * FROM messages
 WHERE from_user_id = :id
+ORDER BY id
 
 -- name: read-user-messages
 -- retrieve messages for a user >= msg_id

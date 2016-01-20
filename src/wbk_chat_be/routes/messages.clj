@@ -29,18 +29,17 @@
       (l/json {:status nil :body "Could not send message!"}))))
 
 (defn sync-msgs [token last-msg-id]
-  (try (let [msg-id (Integer/parseInt (or last-msg-id "0"))
-             user (du/find-user-by-token token)
-             msgs (dm/read-msgs (:id user)
-                                (or msg-id (:last-msg-seen user)))]
-         (du/update-last-msg-seen token (:id (last msgs)))
-         (l/json {:status true
-                  :body (if (zero? msg-id)
-                          msgs
-                          (remove #(= (:id user) (:from_user_id %))
-                                  msgs))}))
-       (catch NumberFormatException nfe
-         (sync-msgs token "0"))))
+  (let [user (du/find-user-by-token token)
+        msg-id (try (Integer/parseInt last-msg-id)
+                    (catch NumberFormatException nfe
+                      (or (:last-msg-seen user) 0)))
+        msgs (dm/read-msgs (:id user) msg-id)]
+    (du/update-last-msg-seen token (:id (last msgs)))
+    (l/json {:status true
+             :body (if (zero? msg-id)
+                     msgs
+                     (remove #(= (:id user) (:from_user_id %))
+                             msgs))})))
 
 (defn share [token to {:keys [filename size tempfile] :as file}]
   (if (> size (* 20 1024 1024))

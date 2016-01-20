@@ -47,11 +47,10 @@
   (let [status (response "status")
         body (response "body")]
     (if status
-      (swap! app-state assoc
-             :popup [:div [:p "Successfully shared file!"]
-                     [:button.btn.btn-default
-                      {:on-click close-popup}
-                      "OK!"]])
+      (do (swap! messages conj {:to (body "to_user_id")
+                                :file (body "file")
+                                :datetime (body "datetime")})
+          (swap! app-state assoc :popup nil))
       (swap! app-state assoc
              :popup [:div [:p "File sharing failed!"]
                      [:p (str "Reason: " body)]
@@ -69,6 +68,7 @@
                       (swap! messages conj {:to (b "to_user_id")
                                             :from (b "from_user_id")
                                             :msg (b "message")
+                                            :file (b "file")
                                             :datetime (b "datetime")}))
                     body))
         (swap! app-state assoc :last-msg-seen ((last body) "id"))))))
@@ -77,7 +77,7 @@
   (let [status (response "status")
         body (response "body")]
     (if status
-      (swap! messages conj {:to (:to @app-state)
+      (swap! messages conj {:to (body "to_user_id")
                             :msg (body "message")
                             :datetime (body "datetime")})
       (js/alert (str body " Please try again.")))))
@@ -146,7 +146,7 @@
   (swap! app-state assoc
          :popup [:form
                  [:input {:id "file" :name "file"
-                          :type "file" :accept "image/*, video/*"}]
+                          :type "file" :accept "video/*"}]
                  [:input.btn.btn-default {:type "button"
                                           :on-click upload-file
                                           :value "Share!"}]
@@ -207,7 +207,12 @@
                             [:span.bg-success.pull-right (user-id->name to)])
                           (when-let [from (:from msg)]
                             [:span.bg-info.pull-right (user-id->name from)])]
-                         [:li [:mark (:msg msg)]]]]]))]))
+                         [:li (cond (not (empty? (:msg msg)))
+                                    [:mark (:msg msg)]
+
+                                    (:file msg)
+                                    [:video {:width "80%" :controls true}
+                                     [:source {:src (subs (:file msg) 16)}]])]]]]))]))
 
 (defn message-input []
   (let [value (r/atom nil)]
@@ -290,7 +295,7 @@
      [:div [:h5 "Currently chatting with " [:strong (:to-name @app-state)]]]
      [message-input]]
     [:div.col-sm-2 [:button.btn.btn-default {:on-click share}
-                    "Share image/video"]]]
+                    "Share video"]]]
    [:div.row
     [:div.col-sm-10
      [message-list]]

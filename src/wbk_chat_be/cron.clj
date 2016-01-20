@@ -2,6 +2,7 @@
   (:require [cronj.core :as cj]
             [wbk-chat-be.dates :as d]
             [wbk-chat-be.db.users :as du]
+            [wbk-chat-be.db.messages :as dm]
             [wbk-chat-be.db.reports :as dr]))
 
 (defonce cjt (atom nil))
@@ -18,7 +19,10 @@
     (doall (map (comp #(dr/set-reports year week from to %) :id)
                 (du/get-all-users)))))
 
-(defn delete-msgs-and-files [t opts])
+(defn rm-msgs-and-files [t opts]
+  (let [to-date (d/date->sql (d/n-days-ago (d/today) 7))]
+    (doall (map (comp #(dm/rm-old-msgs to-date %) :id)
+                (du/get-all-users)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; http://docs.caudate.me/cronj/#crontab
@@ -28,8 +32,8 @@
                        :handler generate-reports
                        :schedule "0 0 1 0 * * *" ; 1am sunday
                        :opts {}}
-                      {:id :delete-msgs-and-files
-                       :handler delete-msgs-and-files ; 5am sunday (after reports have been generated)
+                      {:id :rm-msgs-and-files
+                       :handler rm-msgs-and-files ; 5am sunday (after reports have been generated)
                        :schedule "0 0 5 0 * * *"
                        :opts {}}]))
 

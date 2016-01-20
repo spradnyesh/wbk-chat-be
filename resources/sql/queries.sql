@@ -93,3 +93,19 @@ VALUES (:id, :year, :week, :num_msg_sent, :num_msg_recd, :num_vid_sent, :num_vid
 -- name: get-all-reports
 -- retrieve reports
 SELECT * FROM reports
+
+-- name: get-old-user-files
+-- retrieve file names sent "to" :id
+SELECT file FROM messages
+WHERE to_user_id = :id
+AND datetime <= :to_date
+AND id <= :msg_id
+AND file IS NOT NULL
+AND trim(file) != ''
+
+-- name: rm-old-msgs!
+-- delete user messages that are older than msg-id and to-date
+DELETE FROM messages
+WHERE to_user_id = :id
+AND datetime <= :to_date
+AND id <= :msg_id

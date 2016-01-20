@@ -1,5 +1,7 @@
 (ns wbk-chat-be.db.messages
-  (:require [wbk-chat-be.db.core :as db]))
+  (:require [wbk-chat-be.db.core :as db]
+            [wbk-chat-be.db.users :as du]
+            [clojure.java.io :as io]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Interfaces
@@ -16,3 +18,13 @@
 
 (defn read-msgs [user-id msg-id]
   (db/read-user-messages {:id user-id :msgid msg-id}))
+
+(defn rm-old-msgs [date id]
+  (let [user (du/find-user-by-id id)
+        last-msg-seen (or (:last-msg-seen user) 0)
+        params {:to_date date :msg_id last-msg-seen :id id}
+        files (db/get-old-user-files params)]
+    (map (comp (fn [f] (try (io/delete-file f)
+                            (catch java.io.IOException ioe nil)))
+               :file) files)
+    (db/rm-old-msgs! params)))

@@ -32,6 +32,9 @@
 (defn find-user-by-token [token]
   (last (find-in-state :token token)))
 
+(defn find-user-by-id [id]
+  (last (find-in-state :id id)))
+
 (defn init-state []
   (reset! state
           (mapv (fn [u] {:id (:id u) :email (:email u)

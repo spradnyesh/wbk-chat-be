@@ -329,3 +329,6 @@
   (js/setInterval sync-msgs 1000))
 
 (defn init! [] (mount-components))
+
+;; need to be called explicitly in non-dev environments
+(init!)

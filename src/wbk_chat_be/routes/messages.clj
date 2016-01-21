@@ -22,13 +22,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Logic
 
-(defn send-msg [token to msg]
-  (let [from (du/find-user-by-token token)]
-    (if-let [rslt (dm/send-msg (:id from) to msg)]
-      (do (ws/send-msg to msg)
-          (l/json {:status true :body rslt}))
-      (l/json {:status nil :body "Could not send message!"}))))
-
 (defn sync-msgs [token last-msg-id]
   (let [user (du/find-user-by-token token)
         msg-id (try (Integer/parseInt last-msg-id)
@@ -59,6 +52,5 @@
 ;;;; Routes
 
 (defroutes msg-routes
-  (POST "/send-msg" [token to msg] (send-msg token to msg))
   (GET "/sync" [token msg-id] (sync-msgs token msg-id))
   (POST "/share" [token to file] (share token to file)))

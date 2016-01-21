@@ -15,7 +15,7 @@
       :else          (throw (Exception. (str "invalid port value: " port))))))
 
 (defn http-port [port]
-  (parse-port (or port (env :port) 3000)))
+  (parse-port (or (env :openshift-clojure-http-port) port (env :port) 3000)))
 
 (defn stop-app []
   (repl/stop)

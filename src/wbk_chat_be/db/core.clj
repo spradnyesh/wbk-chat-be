@@ -28,7 +28,9 @@
       conn
       (assoc
         pool-spec
-        :jdbc-url (env :database-url)))
+        :jdbc-url (or (when-let [url (env :openshift-postgresql-db-url)]
+                        (str url "/wbk"))
+                      (env :database-url))))
     conn))
 
 (defn disconnect! [conn]

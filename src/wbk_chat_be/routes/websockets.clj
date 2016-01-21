@@ -1,44 +1,27 @@
 (ns wbk-chat-be.routes.websockets
   (:require [compojure.core :refer [GET defroutes]]
-            [clojure.tools.logging :as log]
-            [immutant.web.async :as async]))
+            [org.httpkit.server :refer [send! with-channel on-close on-receive]]
+            [taoensso.timbre :as timbre]))
 
-(defonce channels (atom []))
+(defonce channels (atom #{}))
 
-#_(defn ws-handler [request]
-  (let [id (:id (:params request))]
-    (letfn [(connect! [channel]
-              (println "connected: " id)
-              (swap! channels conj {:id id :channel channel}))
-            (disconnect! [channel {:keys [code reason]}]
-              (println "disconnected: " id)
-              (swap! channels #(remove (fn [x] (= id (:id x))) %)))
-            (send-msg! [channel msg]
-              (println "@@@@@@@@@@" msg))]
-      (async/as-channel request {:on-open connect!
-                                 :on-close disconnect!
-                                 :on-message send-msg!}))))
+(defn notify-clients [msg]
+  (doseq [channel @channels]
+    (send! channel msg)))
 
 (defn connect! [channel]
-  (log/info "channel open")
+  (timbre/info "channel open")
   (swap! channels conj channel))
 
-(defn disconnect! [channel {:keys [code reason]}]
-  (log/info "close code:" code "reason:" reason)
+(defn disconnect! [channel status]
+  (timbre/info "channel closed:" status)
   (swap! channels #(remove #{channel} %)))
 
-(defn notify-clients! [channel msg]
-  (doseq [channel @channels]
-    (async/send! channel msg)))
-
-(def websocket-callbacks
-  "WebSocket callback functions"
-  {:on-open connect!
-   :on-close disconnect!
-   :on-message notify-clients!})
-
 (defn ws-handler [request]
-  (async/as-channel request websocket-callbacks))
+  (with-channel request channel
+    (connect! channel)
+    (on-close channel (partial disconnect! channel))
+    (on-receive channel #(notify-clients %))))
 
 (defroutes websocket-routes
-  (GET "/ws/:id" [] ws-handler))
+  (GET "/ws" request (ws-handler request)))

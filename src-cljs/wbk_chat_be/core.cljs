@@ -51,7 +51,7 @@
     (if status
       (do (swap! messages conj {:to (body "to_user_id")
                                 :file (body "file")
-                                :datetime (body "datetime")})
+                                :datetime ""})
           (swap! app-state assoc :popup nil))
       (swap! app-state assoc
              :popup [:div [:p "File sharing failed!"]
@@ -71,7 +71,7 @@
                                             :from (b "from_user_id")
                                             :msg (b "message")
                                             :file (b "file")
-                                            :datetime (b "datetime")}))
+                                            :datetime ""}))
                     body))
         (swap! app-state assoc :last-msg-seen ((last body) "id"))))))
 
@@ -86,7 +86,7 @@
 (defn h-send-msg [msg]
   (swap! messages conj {:from (:to @app-state)
                         :msg (msg "message")
-                        :datetime (msg "datetime")}))
+                        :datetime ""}))
 
 (defn h-login [response]
   (let [status (response "status")

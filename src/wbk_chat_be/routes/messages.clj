@@ -2,6 +2,7 @@
   (:require [wbk-chat-be.layout :as l]
             [wbk-chat-be.db.users :as du]
             [wbk-chat-be.db.messages :as dm]
+            [wbk-chat-be.routes.websockets :as ws]
             [compojure.core :refer [defroutes GET POST]]
             [clojure.string :as str]
             [clojure.java.io :as io]))
@@ -24,7 +25,7 @@
 (defn send-msg [token to msg]
   (let [from (du/find-user-by-token token)]
     (if-let [rslt (dm/send-msg (:id from) to msg)]
-      (do nil ; TODO: send msg to to-id via websockets
+      (do (ws/send-msg to msg)
           (l/json {:status true :body rslt}))
       (l/json {:status nil :body "Could not send message!"}))))
 

@@ -3,6 +3,7 @@
             [clojure.tools.logging :as log]
             [environ.core :refer [env]]
             [ring-ttl-session.core :refer [ttl-memory-store]]
+            [ring.middleware.conditional :as rmc]
             [ring.middleware.flash :refer [wrap-flash]]
             [ring.middleware.webjars :refer [wrap-webjars]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
@@ -49,7 +50,8 @@
 
 (defn wrap-base [handler]
   (-> ((:middleware defaults) handler)
-      wrap-formats
+      (rmc/if (fn [request] (not (:websocket? request)))
+        wrap-formats)
       wrap-webjars
       wrap-flash
       (wrap-defaults

@@ -1,20 +1,13 @@
-(ns wbk-chat-be.websockets
-  (:require [cognitect.transit :as t]))
+(ns wbk-chat-be.websockets)
 
 (defonce ws-chan (atom nil))
-(def json-reader (t/reader :json))
-(def json-writer (t/writer :json))
 
-(defn receive-transit-msg!
-  [update-fn]
-  (fn [msg]
-    (update-fn
-     (->> msg .-data (t/read json-reader)))))
+(defn receive-transit-msg! [update-fn]
+  (fn [msg] (update-fn (.-data msg))))
 
-(defn send-transit-msg!
-  [msg]
+(defn send-transit-msg! [msg]
   (if @ws-chan
-    (.send @ws-chan (t/write json-writer msg))
+    (.send @ws-chan msg #_(t/write json-writer msg))
     (throw (js/Error. "Websocket is not available!"))))
 
 (defn make-websocket! [url receive-handler]

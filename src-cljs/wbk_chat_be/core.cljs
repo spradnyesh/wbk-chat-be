@@ -92,8 +92,10 @@
           (reset! page :home))
       (js/alert (str body " Please try again.")))))
 
-(defn update-messages! [{:keys [message]}]
-  (println "@@@" message))
+(defn update-messages! [msg]
+  (swap! messages conj {:to ""
+                        :msg msg
+                        :datetime ""}))
 
 (defn h-login [response]
   (let [status (response "status")
@@ -110,7 +112,7 @@
                :to-name (str (first-user "first_name")
                              " " (first-user "last_name")))
         (reset! page :home)
-        #_(ws/make-websocket! (str "ws://" (.-host js/location) "/ws/" (:id @app-state))
+        (ws/make-websocket! (str "ws://" (.-host js/location) "/ws/" (:id @app-state))
                             update-messages!))
       (js/alert (str body " Please try again.")))))
 
@@ -128,17 +130,19 @@
   (when-let [token (:token @app-state)]
     (GET "/sync" {:handler h-sync
                   :error-handler error-handler
+                  :format :json
                   :params {:token token
                            :msg-id (or (:last-msg-seen @app-state) 0)}})))
 
 (defn send-msg [msg]
-  (let [params {:token (:token @app-state)
-                :to (:to @app-state)
-                :msg msg}]
-    #_(ws/send-msg! params)
-    (POST "/send-msg" {:handler h-send-msg
-                         :error-handler error-handler
-                         :params params})))
+  (let [params {"token" (:token @app-state)
+                "to" (:to @app-state)
+                "msg" msg}]
+    (ws/send-transit-msg! params)
+    #_(POST "/send-msg" {:handler h-send-msg
+                       :error-handler error-handler
+                       :format :json
+                       :params params})))
 
 (defn upload-file [e]
   (let [el (by-id "file")
@@ -150,6 +154,7 @@
                     (.append fname file))]
     (POST "/share" {:handler h-share
                     :error-handler error-handler
+                    :format :json
                     :body form-data})))
 
 (defn share [e]
@@ -173,6 +178,7 @@
         lastname (child-value f-children 4)]
     (POST "/register" {:handler h-register
                        :error-handler error-handler
+                       :format :json
                        :params {:email email
                                 :passwd passwd
                                 :passwd2 passwd2
@@ -185,13 +191,15 @@
         passwd (child-value f-children 1)]
     (POST "/login" {:handler h-login
                     :error-handler error-handler
+                    :format :json
                     :params {:email email
                              :passwd passwd}})))
 
 (defn logout [e]
   (POST "/logout" {:handler h-logout
-                  :error-handler error-handler
-                  :params {:token (:token @app-state)}}))
+                   :error-handler error-handler
+                   :format :json
+                   :params {:token (:token @app-state)}}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; helper UI components
@@ -336,7 +344,7 @@
   (r/render [nav] (by-id "nav"))
   (r/render [main] (by-id "app"))
   (r/render [popup [:div]] (by-id "popup"))
-  (js/setInterval sync-msgs 1000))
+  #_(js/setInterval sync-msgs 1000))
 
 (defn init! [] (mount-components))
 

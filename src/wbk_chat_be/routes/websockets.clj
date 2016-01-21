@@ -1,18 +1,22 @@
 (ns wbk-chat-be.routes.websockets
-  (:require [compojure.core :refer [GET defroutes]]
+  (:require [wbk-chat-be.db.users :as du]
+            [wbk-chat-be.db.messages :as dm]
+            [wbk-chat-be.dates :as d]
+            [compojure.core :refer [GET defroutes]]
             [org.httpkit.server :refer [send! with-channel on-close on-receive]]
             [clojure.data.json :as json]))
 
 (defonce channels (atom {}))
 
-(defn send-msg [to msg]
-  (when-let [ch (first (filter #(= to (first (vals %))) @channels))]
-    (send! (first ch) (json/write-str msg))))
-
-(defn notify-clients [message]
+(defn send-msg [message]
   (let [{:keys [token to msg]} (json/read-str message :key-fn keyword)
-        ch (first (filter #(= to (second %)) @channels))]
-    (send! (first ch) (json/write-str msg))))
+        from (du/find-user-by-token token)]
+    (when from
+      (when-let [rslt (dm/send-msg (:id from) to msg)]
+        (let [dt (d/unparse-time (d/sql->date (:datetime rslt)))
+              ch (first (filter #(= to (second %)) @channels))]
+          (send! (first ch) (json/write-str (assoc (dissoc rslt :datetime)
+                                                   :datetime dt))))))))
 
 (defn connect! [channel id]
   (swap! channels assoc channel id))
@@ -25,7 +29,7 @@
     (with-channel request channel
       (connect! channel id)
       (on-close channel (partial disconnect! channel))
-      (on-receive channel #(notify-clients %)))))
+      (on-receive channel #(send-msg %)))))
 
 (defroutes websocket-routes
   (GET "/ws/:id" request (ws-handler request)))

@@ -1,9 +1,12 @@
-(ns wbk-chat-be.websockets)
+(ns wbk-chat-be.websockets
+  (:require [cognitect.transit :as t]))
 
 (defonce ws-chan (atom nil))
 
+(def json-reader (t/reader :json))
+
 (defn receive-transit-msg! [update-fn]
-  (fn [msg] (update-fn (.-data msg))))
+  (fn [msg] (update-fn (->> msg .-data (t/read json-reader)))))
 
 (defn send-transit-msg! [msg]
   (if @ws-chan

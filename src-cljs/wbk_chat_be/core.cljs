@@ -75,15 +75,6 @@
                     body))
         (swap! app-state assoc :last-msg-seen ((last body) "id"))))))
 
-(defn h-send-msg [response]
-  (let [status (response "status")
-        body (response "body")]
-    (if status
-      (swap! messages conj {:to (body "to_user_id")
-                            :msg (body "message")
-                            :datetime (body "datetime")})
-      (js/alert (str body " Please try again.")))))
-
 (defn h-register [response]
   (let [status (response "status")
         body (response "body")]
@@ -92,10 +83,10 @@
           (reset! page :home))
       (js/alert (str body " Please try again.")))))
 
-(defn update-messages! [msg]
-  (swap! messages conj {:to ""
-                        :msg msg
-                        :datetime ""}))
+(defn h-send-msg [msg]
+  (swap! messages conj {:from (:to @app-state)
+                        :msg (msg "message")
+                        :datetime (msg "datetime")}))
 
 (defn h-login [response]
   (let [status (response "status")
@@ -113,7 +104,7 @@
                              " " (first-user "last_name")))
         (reset! page :home)
         (ws/make-websocket! (str "ws://" (.-host js/location) "/ws/" (:id @app-state))
-                            update-messages!))
+                            h-send-msg))
       (js/alert (str body " Please try again.")))))
 
 (defn h-logout [response]
@@ -138,11 +129,10 @@
   (let [params {"token" (:token @app-state)
                 "to" (:to @app-state)
                 "msg" msg}]
-    (ws/send-transit-msg! params)
-    #_(POST "/send-msg" {:handler h-send-msg
-                       :error-handler error-handler
-                       :format :json
-                       :params params})))
+    (swap! messages conj {:to (:to @app-state)
+                          :msg msg
+                          :datetime ""})
+    (ws/send-transit-msg! params)))
 
 (defn upload-file [e]
   (let [el (by-id "file")
@@ -217,20 +207,21 @@
 (defn message-list []
   (when (not (empty? @messages))
     [:table.table.table-striped
-     (doall (for [[i msg] (map-indexed vector (reverse @messages))]
-              ^{:key i}
-              [:tr [:td [:ul.list-unstyled
-                         [:li.small [:span.datetime (:datetime msg)]
-                          (when-let [to (:to msg)]
-                            [:span.bg-success.pull-right (user-id->name to)])
-                          (when-let [from (:from msg)]
-                            [:span.bg-info.pull-right (user-id->name from)])]
-                         [:li (cond (not (empty? (:msg msg)))
-                                    [:mark (:msg msg)]
+     [:tbody
+      (doall (for [[i msg] (map-indexed vector (reverse @messages))]
+               ^{:key i}
+               [:tr [:td [:ul.list-unstyled
+                          [:li.small [:span.datetime (:datetime msg)]
+                           (when-let [to (:to msg)]
+                             [:span.bg-success.pull-right (user-id->name to)])
+                           (when-let [from (:from msg)]
+                             [:span.bg-info.pull-right (user-id->name from)])]
+                          [:li (cond (not (empty? (:msg msg)))
+                                     [:mark (:msg msg)]
 
-                                    (:file msg)
-                                    [:video {:width "80%" :controls true}
-                                     [:source {:src (subs (:file msg) 16)}]])]]]]))]))
+                                     (:file msg)
+                                     [:video {:width "80%" :controls true}
+                                      [:source {:src (subs (:file msg) 16)}]])]]]]))]]))
 
 (defn message-input []
   (let [value (r/atom nil)]

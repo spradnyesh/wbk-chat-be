@@ -11,3 +11,4 @@ profiles.clj
 *.log
 resources/public/js/out
 resources/public/uploads
+.nrepl-port

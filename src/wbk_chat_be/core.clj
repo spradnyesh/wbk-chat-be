@@ -27,10 +27,12 @@
   [[port]]
   (let [port (http-port port)]
     (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app))
-    (when-let [repl-port (env :nrepl-port)]
-      (repl/start {:port (parse-port repl-port)}))
+    (let [repl-port (env :nrepl-port)]
+      (when (and (not (env :openshift-clojure-http-port)) repl-port)
+        (repl/start {:port (parse-port repl-port)})))
     (http/start {:handler app
                  :init    init
+                 :ip      (or (env :openshift-clojure-http-ip) "0.0.0.0")
                  :port    port})))
 
 (defn -main [& args]

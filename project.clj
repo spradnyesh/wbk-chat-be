@@ -19,6 +19,7 @@
                  [compojure "1.4.0"]
                  [ring-webjars "0.1.1"]
                  [ring/ring-defaults "0.1.5"]
+                 [ring-ttl-session "0.3.0"]
                  [ring "1.4.0" :exclusions [ring/ring-jetty-adapter]]
                  [mount "0.1.8"]
                  [luminus-nrepl "0.1.2"]
@@ -32,7 +33,7 @@
                  [im.chit/cronj "1.4.4"]
                  [clj-time "0.11.0"]
                  [org.webjars/webjars-locator-jboss-vfs "0.1.0"]
-                 [luminus-immutant "0.1.0"]]
+                 [luminus-http-kit "0.1.0"]]
 
   :min-lein-version "2.0.0"
   :uberjar-name "wbk-chat-be.jar"

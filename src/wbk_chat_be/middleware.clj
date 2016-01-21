@@ -2,8 +2,8 @@
   (:require [wbk-chat-be.layout :refer [*app-context* error-page]]
             [clojure.tools.logging :as log]
             [environ.core :refer [env]]
+            [ring-ttl-session.core :refer [ttl-memory-store]]
             [ring.middleware.flash :refer [wrap-flash]]
-            [immutant.web.middleware :refer [wrap-session]]
             [ring.middleware.webjars :refer [wrap-webjars]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
@@ -52,10 +52,9 @@
       wrap-formats
       wrap-webjars
       wrap-flash
-      (wrap-session {:cookie-attrs {:http-only true}})
       (wrap-defaults
         (-> site-defaults
             (assoc-in [:security :anti-forgery] false)
-            (dissoc :session)))
+            (assoc-in  [:session :store] (ttl-memory-store (* 60 30)))))
       wrap-context
       wrap-internal-error))

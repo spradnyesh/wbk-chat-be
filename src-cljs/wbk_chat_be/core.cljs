@@ -75,6 +75,14 @@
                     body))
         (swap! app-state assoc :last-msg-seen ((last body) "id"))))))
 
+(defn sync-msgs []
+  (when-let [token (:token @app-state)]
+    (GET "/sync" {:handler h-sync
+                  :error-handler error-handler
+                  :format :json
+                  :params {:token token
+                           :msg-id (or (:last-msg-seen @app-state) 0)}})))
+
 (defn h-register [response]
   (let [status (response "status")
         body (response "body")]
@@ -103,6 +111,7 @@
                :to-name (str (first-user "first_name")
                              " " (first-user "last_name")))
         (reset! page :home)
+        (sync-msgs)
         (ws/make-websocket! (str "ws://" (.-host js/location) "/ws/" (:id @app-state))
                             h-send-msg))
       (js/alert (str body " Please try again.")))))
@@ -116,14 +125,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Logic (communication with service)
-
-(defn sync-msgs []
-  (when-let [token (:token @app-state)]
-    (GET "/sync" {:handler h-sync
-                  :error-handler error-handler
-                  :format :json
-                  :params {:token token
-                           :msg-id (or (:last-msg-seen @app-state) 0)}})))
 
 (defn send-msg [msg]
   (let [params {"token" (:token @app-state)
@@ -334,8 +335,7 @@
   []
   (r/render [nav] (by-id "nav"))
   (r/render [main] (by-id "app"))
-  (r/render [popup [:div]] (by-id "popup"))
-  #_(js/setInterval sync-msgs 1000))
+  (r/render [popup [:div]] (by-id "popup")))
 
 (defn init! [] (mount-components))
 

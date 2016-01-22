@@ -48,6 +48,14 @@ WHERE id > :msgid
 AND (to_user_id = :id
      OR from_user_id = :id)
 
+-- name: read-user-vids
+-- retrieve videos for a user >= msg_id
+SELECT * FROM messages
+WHERE id > :msgid
+AND to_user_id = :id
+AND file IS NOT NULL
+AND trim(file) != ''
+
 -- name: count-messages-from
 -- retrieve message count for a from-user
 SELECT COUNT(*) FROM messages

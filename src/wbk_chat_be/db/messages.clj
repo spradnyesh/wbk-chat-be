@@ -19,6 +19,9 @@
 (defn read-msgs [user-id msg-id]
   (db/read-user-messages {:id user-id :msgid msg-id}))
 
+(defn read-vids [user-id msg-id]
+  (db/read-user-vids {:id user-id :msgid msg-id}))
+
 (defn rm-old-msgs [date id]
   (let [user (du/find-user-by-id id)
         last-msg-seen (or (:last-msg-seen user) 0)

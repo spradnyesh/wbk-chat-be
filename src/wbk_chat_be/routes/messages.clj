@@ -31,6 +31,14 @@
     (du/update-last-msg-seen token (:id (last msgs)))
     (l/json {:status true :body msgs})))
 
+(defn sync-vids [token last-msg-id]
+  (let [user (du/find-user-by-token token)
+        msg-id (try (Integer/parseInt last-msg-id)
+                    (catch NumberFormatException nfe
+                      (or (:last-msg-seen user) 0)))
+        msgs (dm/read-vids (:id user) msg-id)]
+    (l/json {:status true :body msgs})))
+
 (defn share [token to {:keys [filename size tempfile] :as file}]
   (if (> size (* 20 1024 1024))
     (l/json {:status nil :body "File size cannot be bigger than 20MB!"})
@@ -49,4 +57,5 @@
 
 (defroutes msg-routes
   (GET "/sync" [token msg-id] (sync-msgs token msg-id))
+  (GET "/sync-vids" [token msg-id] (sync-vids token msg-id))
   (POST "/share" [token to file] (share token to file)))

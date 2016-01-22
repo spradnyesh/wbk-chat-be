@@ -83,6 +83,14 @@
                   :params {:token token
                            :msg-id (or (:last-msg-seen @app-state) 0)}})))
 
+(defn sync-vids []
+  (when-let [token (:token @app-state)]
+    (GET "/sync-vids" {:handler h-sync
+                       :error-handler error-handler
+                       :format :json
+                       :params {:token token
+                                :msg-id (or (:last-msg-seen @app-state) 0)}})))
+
 (defn h-register [response]
   (let [status (response "status")
         body (response "body")]
@@ -335,7 +343,8 @@
   []
   (r/render [nav] (by-id "nav"))
   (r/render [main] (by-id "app"))
-  (r/render [popup [:div]] (by-id "popup")))
+  (r/render [popup [:div]] (by-id "popup"))
+  (js/setInterval sync-vids 10000))
 
 (defn init! [] (mount-components))
 

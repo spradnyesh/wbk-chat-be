@@ -15,9 +15,11 @@
       (when-let [rslt (dm/send-msg (:id from) to msg)]
         (du/update-last-msg-seen (:id from) (:id (last rslt)))
         (let [dt (d/unparse-datetime (d/sql->date (:datetime rslt)))
-              ch (first (filter #(= to (second %)) @channels))]
-          (when (send! (first ch) (json/write-str (assoc (dissoc rslt :datetime)
-                                                         :datetime dt)))
+              ch (first (first (filter #(= to (second %)) @channels)))]
+          (when (and ch
+                     (send! ch
+                            (json/write-str (assoc (dissoc rslt :datetime)
+                                                   :datetime dt))))
             (du/update-last-msg-seen to (:id (last rslt)))))))))
 
 (defn connect! [channel id]

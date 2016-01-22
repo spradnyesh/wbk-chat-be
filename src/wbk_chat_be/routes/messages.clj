@@ -29,11 +29,7 @@
                       (or (:last-msg-seen user) 0)))
         msgs (dm/read-msgs (:id user) msg-id)]
     (du/update-last-msg-seen token (:id (last msgs)))
-    (l/json {:status true
-             :body (if (zero? msg-id)
-                     msgs
-                     (remove #(= (:id user) (:from_user_id %))
-                             msgs))})))
+    (l/json {:status true :body msgs})))
 
 (defn share [token to {:keys [filename size tempfile] :as file}]
   (if (> size (* 20 1024 1024))

@@ -48,12 +48,12 @@
       (swap! state conj {:id (:id user) :email email
                          :token token :last-msg-seen 0}))))
 
-(defn update-last-msg-seen [token msgid]
-  (if-let [idx (first (find-in-state :token token))]
+(defn update-last-msg-seen [id msgid]
+  (if-let [idx (first (find-in-state :id id))]
     (swap! state assoc-in [idx :last-msg-seen] msgid)
-    (let [user (find-user-by-token token)]
-      (swap! state conj {:id (:id user) :email (:email user)
-                         :token token :last-msg-seen 0}))))
+    (let [user (find-user-by-id id)]
+      (swap! state conj {:id id :email (:email user)
+                         :token (:token user) :last-msg-seen 0}))))
 
 (defn create-user [user]
   (db/create-user<! user)

@@ -13,10 +13,12 @@
         from (du/find-user-by-token token)]
     (when from
       (when-let [rslt (dm/send-msg (:id from) to msg)]
-        (let [dt (d/unparse-time (d/sql->date (:datetime rslt)))
+        (du/update-last-msg-seen (:id from) (:id (last rslt)))
+        (let [dt (d/unparse-datetime (d/sql->date (:datetime rslt)))
               ch (first (filter #(= to (second %)) @channels))]
-          (send! (first ch) (json/write-str (assoc (dissoc rslt :datetime)
-                                                   :datetime dt))))))))
+          (when (send! (first ch) (json/write-str (assoc (dissoc rslt :datetime)
+                                                         :datetime dt)))
+            (du/update-last-msg-seen to (:id (last rslt)))))))))
 
 (defn connect! [channel id]
   (swap! channels assoc channel id))

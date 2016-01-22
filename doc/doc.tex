@@ -1,0 +1,173 @@
+\documentclass[a4paper, 10pt]{article}
+
+\usepackage{times}
+\usepackage[top = 1.2in, bottom = 1.2in, right = 1.2in, left = 1.2in]{geometry}
+\usepackage[pdftex]{graphicx}
+% \usepackage{setspace} %needed for
+% \begin{onehalfspace}
+
+\title{Real-time chat service for WunderBarKids}
+\author{Pradnyesh Sawant}
+\date{\today}    \vspace{-\baselineskip}
+\pagestyle{empty}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}   %maketitle has it's own pagestyle, so overwrite it with our own
+% \tableofcontents
+
+%\begin{abstract}
+%\end{abstract}
+
+% \begin{onehalfspace}
+
+\section{Requirements}
+Realtime chat cross browser, device and platform with video sharing service (Any language)
+
+Time : 1 Week
+
+\begin{itemize}
+\item You are required to create a service to support realtime chat from multiple devices (browser, native clients, mobile etc)
+\item User should be able to share videos
+\item Client connectivity is going to be choppy hence service need to support sync methods
+\item Design the platform (DB, Services, Interfaces) to support the above requirement
+\item Design a simple REST api to aggregate a weekly information on who , what and when used this API
+\end{itemize}
+
+You should be able to answer the assumptions that you make for performance, extendibility and scalability.
+
+\section{Introduction}
+Even though I was required to create just the service, I created both the service and a web-based frontend, because of the following reasons:
+
+\begin{itemize}
+  \item Service would have been a ``pull'' model, and would have suffered from performance issues (see ``Performance Considerations -$>$ WebSockets'' section below)
+  \item I was able to demonstrate my knowledge about the whole stack
+\end{itemize}
+
+\section{Service APIs}
+\begin{tabular}[]{|l|l|p{4.8cm}|p{2.2cm}|p{5cm}|}
+  \hline
+  URI & Type & Parameters & Functionality & Remarks \\ \hline
+  /register & POST & email, passwd, passwd2, first-name, last-name & Register user & \\ \hline
+  /login & POST & email, passwd & Login & \\ \hline
+  /logout & POST & token & Logout & \\ \hline
+  /send-msg & POST & token, to, msg & Send messages & Deleted, in favor of websockets (see below) \\ \hline
+  /share & POST & token, to, vid & Share videos & \\ \hline
+  /sync & GET & token, msg-id & Sync messages & pass last-see-message-id \\ \hline
+  /sync-vids & GET & token, msg-id & Sync videos & pass last-see-message-id \\ \hline
+  /reports & GET & -- & Weekly reports & NOTE: only till the last week, nothing for current week \\ \hline
+\end{tabular}
+
+\section{System Design}
+In the real world scenario, the system design should look as shown below:
+
+\includegraphics[width=6in]{ideal.png}
+
+However, in our case, it looks like as shown below. This is because of the following reasons:
+
+\begin{itemize}
+  \item Due to security policies, JS can only talk to it's originating server =$>$ backend and frontend need to be separate servers
+  \item It would have been an overkill (and too much effort) to create and maintain 2 servers (backend and frontend)
+  \item So I ended up clubbing the 2 servers, but keeping the actual code modular such that it can be easily separated in the near future if need be
+\end{itemize}
+
+\includegraphics[width=6in]{implemented.png}
+
+I have used the following stack:
+\begin{itemize}
+  \item DB: postgresql
+  \item web-server: http-kit (http://www.http-kit.org/)
+  \item programming language: clojure+clojurescript
+  \item (notable) libraries used:
+    \begin{itemize}
+    \item luminus: initial project template
+    \item selmer: html templating
+    \item ring: server-side middleware
+    \item bouncer: encryption
+    \item buddy: validation
+    \item cronj: cron-jobs
+    \item bootstrap: css
+    \item figwheel: rapid clojurescript development
+    \item reagent: clojurescript wrapper to FaceBook react.js
+    \item cljs-ajax: for AJAX
+    \end{itemize}
+\end{itemize}
+
+\section{Performance Considerations}
+\subsection{WebSockets}
+In the initial design, I had a ``/send-msg'' POST API. However, while creating the frontend I realized that this is a extremely non-performant way of doing things, because it was necessary to call the ``/sync'' API multiple times every second to achieve the ``real-time'' effect. This would have, obviously, created exponetially more requests as the number of clients grew. And, even though the response body was pretty small (actually, empty, most of the time), the sheer number of requests to the server would have been too much.
+
+The obvious solution was to use ``websockets'' and get rid of the ``send-msg'' API. The advantages of using this approach are:
+
+\begin{itemize}
+  \item The load on the servers (frontend -$>$ backend -$>$ database) reduces to less than 1\% of it's previous value
+\end{itemize}
+
+The disadvantage of using this method are:
+
+\begin{itemize}
+  \item File sharing cannot be done over websockets. So we need to create another pair of APIs (``/share'' and ``/sync-vids''). Also, to keep server load low (and have a non-realtime effect), we set the interval for calling the ``/sync-vids'' API to every 10 seconds
+\end{itemize}
+
+\subsection{Cron Jobs}
+Cron jobs are needed for the following 2 tasks
+\begin{itemize}
+  \item Weekly report generation (not really a performance thing)
+  \item Delete old (seen-by-user) messages and shared-files: this will reduce the DB size and disk usage and will thus improve performance
+\end{itemize}
+Both the jobs run on a weekly schedule
+
+\section{Miscellaneous}
+\subsection{State}
+I have used ``atom'' (a clojure data-structure) to maintain in-memory state, like
+\begin{itemize}
+  \item last-seen-msgs for every user
+  \item websocket channels
+  \item etc...
+\end{itemize}
+These states need not be stored in DB; the worst thing that will happen if this state is lost is that the user will find himself logged-out from the system =$>$ a bad user-experience, but not a critical one for this assignment. It can be easily replaced with memcached or redis in a real-world application.
+
+\subsection{Demo Videos}
+You will also find the following demo videos, that demonstrate the running application, in the current folder
+
+\begin{itemize}
+  \item user-registration.mp4
+  \item login.mp4
+  \item real-time-chat.mp4
+  \item sync-feature.mp4
+  \item video-sharing.mp4
+\end{itemize}
+
+\subsection{Running The App}
+To deploy and run the app on a local machine, please follow these steps (steps prepended with a \$ need to be executed at the terminal):
+
+\begin{itemize}
+  \item Install java (jdk)
+  \item Install postgresql (and create database with following credentials)
+    \begin{itemize}
+    \item DB name: wbk\_dev
+    \item DB username: wbk
+    \item DB passwd: wbk
+    \end{itemize}
+  \item Install leiningen (http://leiningen.org/\#install)
+  \item \$ git clone https://github.com/spradnyesh/wbk-chat-be
+  \item \$ cd wbk-chat-be
+  \item \$ lein migratus migrate
+  \item Now in 2 different terminals run the following commands:
+    \begin{itemize}
+    \item \$ lein run
+    \item \$ lein figwheel
+    \end{itemize}
+  \item visit location ``http://localhost:3000'' in the browser
+\end{itemize}
+
+\subsection{Open-Source Contribution}
+During implemetation of this assignment, I was able to fix the issue regarding
+
+http://www.luminusweb.net/docs/websockets.md\#adding\_the\_routes\_to\_the\_handler
+
+(see ``***important***'' part). I will submit a pull-request for the same shortly.
+
+% \end{onehalfspace}
+\end{document}

@@ -46,17 +46,17 @@ Even though I was required to create just the service, I created both the servic
 \end{itemize}
 
 \section{Service APIs}
-\begin{tabular}[]{|l|l|p{4.8cm}|p{2.2cm}|p{5cm}|}
+\begin{tabular}[]{|l|l|p{2cm}|p{5cm}|p{2.1cm}|p{2cm}|}
   \hline
-  URI & Type & Parameters & Functionality & Remarks \\ \hline
-  /register & POST & email, passwd, passwd2, first-name, last-name & Register user & \\ \hline
-  /login & POST & email, passwd & Login & \\ \hline
-  /logout & POST & token & Logout & \\ \hline
-  /send-msg & POST & token, to, msg & Send messages & Deleted, in favor of websockets (see below) \\ \hline
-  /share & POST & token, to, vid & Share videos & \\ \hline
-  /sync & GET & token, msg-id & Sync messages & pass last-see-message-id \\ \hline
-  /sync-vids & GET & token, msg-id & Sync videos & pass last-see-message-id \\ \hline
-  /reports & GET & -- & Weekly reports & NOTE: only till the last week, nothing for current week \\ \hline
+  URI & Type & Parameters & Sample Output & Functionality & Remarks \\ \hline
+  /register & POST & email, passwd, passwd2, first-name, last-name & \{:status true :body "Registered sucessfully!"\} & Register user & \\ \hline
+  /login & POST & email, passwd & \{:status true :body \{:id 2 :token ``pbkdf2+sha3-256\$5bd77a'' :name ``A B'' :users (\{:id 1, :first\_name "A", :last\_name "B", :email "a@b.com"\} \{:id 3, :first\_name "E", :last\_name "F", :email "e@f.com"\})\} & Login & \\ \hline
+  /logout & POST & token & \{:status true :body "Logged-out successfully!"\} & Logout & \\ \hline
+  /send-msg & POST & token, to, msg & -- & Send messages & Deleted, in favor of websockets (see below) \\ \hline
+  /share & POST & token, to, vid & \{:status true :body \{:id 12, :from\_user\_id 1, :to\_user\_id 2, :message "", :datetime \#inst "2016-01-22T10:49:20.756-00:00", :file "resources/public/uploads/ring-multipart-5624539836408241247.mp4"\}\} & Share videos & \\ \hline
+  /sync & GET & token, msg-id & \{:status true :body (\{:id 3, :from\_user\_id 1, :to\_user\_id 2, :message "ab -> cd", :datetime \#inst "2016-01-22T08:53:12.917-00:00", :file ""\} \{:id 6, :from\_user\_id 4, :to\_user\_id 1, :message "gh -> ab", :datetime \#inst "2016-01-22T08:53:42.729-00:00", :file ""\})\} & Sync messages & pass last-see-message-id \\ \hline
+  /sync-vids & GET & token, msg-id & \{:status true :body (\{:id 11, :from\_user\_id 1, :to\_user\_id 2, :message "", :datetime \#inst "2016-01-22T08:58:07.690-00:00", :file "resources/public/uploads/ring-multipart-5624539836408241247.mp4"\} \{:id 12, :from\_user\_id 1, :to\_user\_id 2, :message "", :datetime \#inst "2016-01-22T10:49:20.756-00:00", :file "abc"\})\} & Sync videos & pass last-see-message-id \\ \hline
+  /reports & GET & -- & \{:status true, :body (\{:id 1, :user\_id 1, :year 2016, :week 3, :num\_msg\_sent 5, :num\_msg\_recd 3, :num\_vid\_sent 1, :num\_vid\_recd 0\} \{:id 2, :user\_id 1, :year 2016, :week 3, :num\_msg\_sent 7, :num\_msg\_recd 1, :num\_vid\_sent 0, :num\_vid\_recd 1\} \{:id 3, :user\_id 1, :year 2016, :week 3, :num\_msg\_sent 2, :num\_msg\_recd 10, :num\_vid\_sent 1, :num\_vid\_recd 1\})\} & Weekly reports & NOTE: only till the last week, nothing for current week \\ \hline
 \end{tabular}
 
 \section{System Design}

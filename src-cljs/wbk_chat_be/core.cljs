@@ -285,21 +285,19 @@
 (defn nav []
   (if-not (:token @app-state)
     ;; logged-out state
-    [:div.navbar-collapse.collapse
-     [:ul.nav.navbar-nav
-      [:li [:a.navbar-brand {:href "#" :on-click #(reset! page :home)}
-            "WBK-CHAT"]]
-      [:li [:a {:href "#" :on-click #(reset! page :sign-up)}
-            "Register"]]
-      [:li [:a {:href "#" :on-click #(reset! page :sign-in)}
-            "Login"]]]]
+    [:ul.nav.navbar-nav
+     [:li [:a.navbar-brand {:href "#" :on-click #(reset! page :home)}
+           "WBK-CHAT"]]
+     [:li [:a {:href "#" :on-click #(reset! page :sign-up)}
+           "Register"]]
+     [:li [:a {:href "#" :on-click #(reset! page :sign-in)}
+           "Login"]]]
     ;; logged-in state
-    [:div.navbar-collapse.collapse
-     [:ul.nav.navbar-nav
-      [:li [:a.navbar-brand {:href "#" :on-click #(reset! page :home)}
-            "WBK-CHAT"]]
-      [:li [:a {:href "#" :on-click nil} (str "Welcome \"" (:name @app-state) "\"!")]]
-      [:li [:a {:href "#" :on-click logout} "Logout"]]]]))
+    [:ul.nav.navbar-nav
+     [:li [:a.navbar-brand {:href "#" :on-click #(reset! page :home)}
+           "WBK-CHAT"]]
+     [:li [:a {:href "#" :on-click nil} (str "Welcome \"" (:name @app-state) "\"!")]]
+     [:li [:a {:href "#" :on-click logout} "Logout"]]]))
 
 (defn popup [markup]
   (if-let [markup (:popup @app-state)]
@@ -341,7 +339,7 @@
   - initializes global state
   - attaches component 'main' to '#app' element in index.html"
   []
-  (r/render [nav] (by-id "nav"))
+  (r/render [nav] (by-id "app-navbar"))
   (r/render [main] (by-id "app"))
   (r/render [popup [:div]] (by-id "popup"))
   (js/setInterval sync-vids 10000))

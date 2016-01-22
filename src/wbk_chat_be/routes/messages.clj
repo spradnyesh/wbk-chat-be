@@ -39,7 +39,7 @@
         msgs (dm/read-vids (:id user) msg-id)]
     (l/json {:status true :body msgs})))
 
-(defn share [token to {:keys [filename size tempfile] :as file}]
+(defn share [token to {:keys [filename content-type tempfile size]}]
   (if (> size (* 20 1024 1024))
     (l/json {:status nil :body "File size cannot be bigger than 20MB!"})
     (let [from (du/find-user-by-token token)
@@ -47,8 +47,7 @@
           new-fname (rename-file (str tempfile) (str filename))]
       (if new-fname
         (if-let [rslt (dm/send-file (:id from) to-id new-fname)]
-          (do nil ; TODO: send msg to to-id via websockets
-              (l/json {:status true :body rslt}))
+          (l/json {:status true :body rslt})
           (l/json {:status nil :body "Could not share file!"}))
         (l/json {:status nil :body "Could not store file!"})))))
 

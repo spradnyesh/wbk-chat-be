@@ -145,15 +145,13 @@
 
 (defn upload-file [e]
   (let [el (by-id "file")
-        fname (.-name el)
         file (aget (.-files el) 0)
         form-data (doto (js/FormData.)
                     (.append "token" (:token @app-state))
                     (.append "to" (:to @app-state))
-                    (.append fname file))]
+                    (.append "file" file))]
     (POST "/share" {:handler h-share
                     :error-handler error-handler
-                    :format :json
                     :body form-data})))
 
 (defn share [e]
@@ -177,7 +175,6 @@
         lastname (child-value f-children 4)]
     (POST "/register" {:handler h-register
                        :error-handler error-handler
-                       :format :json
                        :params {:email email
                                 :passwd passwd
                                 :passwd2 passwd2
@@ -190,14 +187,12 @@
         passwd (child-value f-children 1)]
     (POST "/login" {:handler h-login
                     :error-handler error-handler
-                    :format :json
                     :params {:email email
                              :passwd passwd}})))
 
 (defn logout [e]
   (POST "/logout" {:handler h-logout
                    :error-handler error-handler
-                   :format :json
                    :params {:token (:token @app-state)}}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
